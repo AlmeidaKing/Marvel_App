@@ -9,8 +9,8 @@ export default function App() {
 
   const [chars, setChars] = useState([]);
 
-  useEffect( async () =>{ 
-  
+  const fetchCharacters = async() =>{
+
     const ts = Date.now()
     const privateKey = '661a6a65c4039a3a2b42efdebb369f159fa689d7'
     const publicKey = '2718213ca607928b87751744cd377323'
@@ -26,16 +26,34 @@ export default function App() {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
-    })
-  .then( (response) => response.json()) 
+    }).then(response => response.json())
+    
+    setChars(response.data.results)
 
-  setChars(response)
+  }
 
-  
+
+
+  useEffect( () =>{ 
+    fetchCharacters();
+
 }, [])
 
   return(
-    <Text>Hello World</Text>
+    <View style={styles.container}>
+      {chars.map(item => {
+        return <Text>{item.name}</Text>
+      })}
+    </View>
   )
-  
+
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "white"
+  }
+});
+
+
