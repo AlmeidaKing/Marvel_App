@@ -1,12 +1,13 @@
 import  React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, SafeAreaView, FlatList, TouchableOpacity, Image } from 'react-native';
+import { StyleSheet, View, Text, SafeAreaView, FlatList, Image } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import * as Crypto from 'expo-crypto'
 import { CryptoDigestAlgorithm } from 'expo-crypto';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
-export default function App() {
 
+function HomeScreen({navigation}){
   const [chars, setChars] = useState([]);
 
   const fetchCharacters = async() =>{
@@ -29,30 +30,114 @@ export default function App() {
     }).then(response => response.json())
     
     setChars(response.data.results)
-
   }
 
 
 
   useEffect( () =>{ 
     fetchCharacters();
-
 }, [])
 
+ const _onItemPress= (item)=>{
+  navigation.navigate('Description', item)
+ }
+  
+  const numColumns = 2
+
   return(
-    <View style={styles.container}>
-      {chars.map(item => {
-        return <Text>{item.name}</Text>
-      })}
-    </View>
+        <SafeAreaView style={styles.container}>
+          <FlatList
+            data={chars}
+            keyExtractor={item => item.id}
+            renderItem={({item}) => (
+              <View style={styles.itemContainer}>
+                <TouchableOpacity
+                  style={styles.itemLink}
+                  onPress={(item) => _onItemPress(item)}
+                >
+                  <Image 
+                    source={{uri: `${item.thumbnail.path}.${item.thumbnail.extension}`}}
+                    style={styles.itemImage}
+                    />
+                  <Text style={styles.itemText}>{item.name}</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+            numColumns={numColumns}
+          />
+        </SafeAreaView>
+    )
+}
+
+export default function App() {
+  
+  const Stack = createStackNavigator();
+
+  return(
+    <NavigationContainer>
+      <Stack.Navigator
+        screenOptions={{
+          headerTintColor: 'white',
+          headerStyle: { backgroundColor: '#252525' },
+        }}
+      >
+        <Stack.Screen 
+          name='Marvel Heroes' 
+          component={HomeScreen}
+        />
+        <Stack.Screen
+          name='Description'
+          component={heroDescription}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
   )
 
 }
 
+function heroDescription({item}){
+
+  console.log(item)
+  
+  return(
+        <SafeAreaView style={styles.container}>
+          <Text>{item}</Text>
+        </SafeAreaView>
+    )
+}
+
+
+
 const styles = StyleSheet.create({
+
   container: {
-    flex: 1,
-    backgroundColor: "white"
+    backgroundColor: '#3d3d3d',
+  },
+  
+  itemContainer: {
+    backgroundColor: '#585858',
+    flexGrow: 1,
+    margin: 4,
+    flexBasis: 0,
+    flexDirection: 'column',
+  },
+  
+  itemLink: {
+    alignItems: 'center',
+    padding: 20,
+  },
+
+  itemImage: {
+    padding: 20,
+    height: 70, 
+    width: 70,
+    borderRadius: 50
+  },
+
+  itemText: {
+    color: 'white',
+    marginTop: 15,
+    textAlign: 'center'
   }
 });
 
