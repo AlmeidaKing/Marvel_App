@@ -1,5 +1,5 @@
 import  React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, SafeAreaView, FlatList, Image } from 'react-native';
+import { StyleSheet, View, Text, SafeAreaView, FlatList, Image, Dimensions } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import * as Crypto from 'expo-crypto'
@@ -9,7 +9,8 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 
 function HomeScreen({navigation}){
   const [chars, setChars] = useState([]);
-
+  const [offset, setOffset] = useState(0);
+  
   const fetchCharacters = async() =>{
 
     const ts = Date.now()
@@ -21,27 +22,35 @@ function HomeScreen({navigation}){
       `${ts}${privateKey}${publicKey}`
     )
 
-    const response = await fetch(`http://gateway.marvel.com/v1/public/characters?apikey=${publicKey}&ts=${ts}&hash=${hash}`, {
+    let response = await fetch(`http://gateway.marvel.com/v1/public/characters?apikey=${publicKey}&ts=${ts}&hash=${hash}&offset=${offset}`, {
       method: 'GET',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
     }).then(response => response.json())
-    
-    setChars(response.data.results)
+
+    setChars([...chars, ...response.data.results])
   }
-
-
 
   useEffect( () =>{ 
     fetchCharacters();
 }, [])
 
- const _onItemPress= (item)=>{
-  navigation.navigate('Description', item)
+  useEffect( () =>{ 
+    fetchCharacters();
+}, [offset])
+
+
+ const _onItemPress= (character)=>{
+  navigation.navigate("Description", {item: character})
  }
   
+
+ const offsetCharss = () =>{
+   setOffset(offset + 20)
+}
+
   const numColumns = 2
 
   return(
@@ -53,7 +62,7 @@ function HomeScreen({navigation}){
               <View style={styles.itemContainer}>
                 <TouchableOpacity
                   style={styles.itemLink}
-                  onPress={(item) => _onItemPress(item)}
+                  onPress={() => _onItemPress(item)}
                 >
                   <Image 
                     source={{uri: `${item.thumbnail.path}.${item.thumbnail.extension}`}}
@@ -64,6 +73,8 @@ function HomeScreen({navigation}){
               </View>
             )}
             numColumns={numColumns}
+            onEndReached={offsetCharss}
+            onEndReachedThreshold={0.1}
           />
         </SafeAreaView>
     )
@@ -95,23 +106,26 @@ export default function App() {
 
 }
 
-function heroDescription({item}){
+function heroDescription({route}){
 
-  console.log(item)
+  const {item} = route.params;
   
   return(
         <SafeAreaView style={styles.container}>
-          <Text>{item}</Text>
+          <Image source={{uri: `${item.thumbnail.path}.${item.thumbnail.extension}`}} style={{height:SCREEN_WIDTH, width: SCREEN_WIDTH}}/>
+          <Text style={[styles.itemText, {fontSize: 26, fontWeight: 'bold'}]}>{item.name}</Text>
+          <Text style={styles.itemText}>{item.description ? item.description : 'No description' }</Text>
         </SafeAreaView>
     )
 }
 
-
+const SCREEN_WIDTH = Dimensions.get('screen').width;
 
 const styles = StyleSheet.create({
 
   container: {
     backgroundColor: '#3d3d3d',
+    flex: 1
   },
   
   itemContainer: {
@@ -138,6 +152,10 @@ const styles = StyleSheet.create({
     color: 'white',
     marginTop: 15,
     textAlign: 'center'
+  },
+
+  imageDescription: {
+
   }
 });
 
